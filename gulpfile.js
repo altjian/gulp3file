@@ -98,11 +98,52 @@ gulp.task('serve', ['scripts', 'styles'], () => {
     // Note: this uses an unsigned certificate which on first access
     //       will present a certificate warning in the browser.
     // https: true,
-    server: ['.tmp', 'app', 'node_modules']
+    server: ['.tmp', 'app', 'dist', 'bootstrap/dist']
   });
 
   gulp.watch(['app/**/*.html'], reload);
   gulp.watch(['app/styles/**/*.{scss,css}'], ['styles', reload]);
   gulp.watch(['app/scripts/**/*.js'], ['scripts', reload]);
   gulp.watch(['app/images/**/*'], reload);
+  gulp.watch(['app/ui/**/*.{scss,css}'], ['bs:css', reload]);
+});
+
+// Copy BootStrap
+gulp.task('copy-bs', () =>
+  gulp.src([
+    'node_modules/bootstrap/**',
+  ], {
+    dot: true
+  }).pipe(gulp.dest('bootstrap'))
+    .pipe($.size({title: 'copy-bs'}))
+);
+
+gulp.task('copy-ui', ['copy-bs'], () =>
+  gulp.src([
+    'node_modules/jquery/dist/jquery.min.js',
+    'node_modules/popper.js/dist/popper.min.js',
+    'bootstrap/dist/js/bootstrap.min.js'
+  ], {
+    dot: true
+  }).pipe(gulp.dest('app/ui/js'))
+    .pipe(gulp.dest('dist/ui/js'))
+    .pipe($.size({title: 'copy-ui'}))
+);
+
+gulp.task('bs:css', () => {
+  return gulp.src([
+    'app/ui/css/**/*.scss',
+    'app/ui/css/**/*.css'
+  ])
+    .pipe($.newer('dist/ui/css'))
+    .pipe($.sourcemaps.init())
+    .pipe($.sass({
+      precision: 10
+    }).on('error', $.sass.logError))
+    .pipe(gulp.dest('dist/ui/css'))
+    // Concatenate and minify styles
+    .pipe($.if('*.css', $.cssnano()))
+    .pipe($.size({title: 'bs:css'}))
+    .pipe($.sourcemaps.write('./'))
+    .pipe(gulp.dest('dist/ui/css'));
 });

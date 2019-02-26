@@ -83,3 +83,4 @@ typings/
 app/
 dist/
 .tmp/
+bootstrap/
